@@ -27,11 +27,11 @@ Preferred communication style: Simple, everyday language.
 - **Development**: Hot reload with Vite integration
 
 ### Data Storage
-- **Database**: PostgreSQL with Neon serverless connection
+- **Database**: PostgreSQL with persistent storage (upgraded from in-memory)
 - **ORM**: Drizzle ORM for type-safe database operations
 - **Schema**: Relational design with travel itineraries and segments tables
 - **Migrations**: Drizzle Kit for schema management
-- **Fallback**: In-memory storage for development/testing
+- **Connection**: Neon serverless PostgreSQL client
 
 ## Key Components
 
@@ -89,8 +89,13 @@ The application uses two main tables:
 - `VITE_GOOGLE_MAPS_API_KEY`: Google Maps API key (optional)
 
 ### Development vs Production
-- **Development**: Vite dev server with HMR, in-memory storage fallback
+- **Development**: Vite dev server with HMR, PostgreSQL database
 - **Production**: Bundled static files, PostgreSQL database required
 - **Replit Integration**: Special handling for Replit environment detection
+
+### Recent Changes
+- **December 2024**: Upgraded from in-memory storage to persistent PostgreSQL database
+- **Database Migration**: Successfully deployed schema with travel_itineraries and travel_segments tables
+- **Storage Layer**: Replaced MemStorage with DatabaseStorage for persistent data
 
 The application is designed to work in both development and production environments, with graceful fallbacks for missing external services during development.

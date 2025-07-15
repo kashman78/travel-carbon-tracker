@@ -6,6 +6,8 @@ import {
   type InsertTravelItinerary,
   type InsertTravelSegment 
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Travel Itinerary operations
@@ -19,65 +21,46 @@ export interface IStorage {
   updateItineraryEmissions(id: number, totalEmissions: number): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private itineraries: Map<number, TravelItinerary>;
-  private segments: Map<number, TravelSegment>;
-  private currentItineraryId: number;
-  private currentSegmentId: number;
-
-  constructor() {
-    this.itineraries = new Map();
-    this.segments = new Map();
-    this.currentItineraryId = 1;
-    this.currentSegmentId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async createItinerary(insertItinerary: InsertTravelItinerary): Promise<TravelItinerary> {
-    const id = this.currentItineraryId++;
-    const itinerary: TravelItinerary = {
-      ...insertItinerary,
-      id,
-      multipleTransport: insertItinerary.multipleTransport ?? false,
-      totalEmissions: insertItinerary.totalEmissions ?? 0,
-      createdAt: new Date(),
-    };
-    this.itineraries.set(id, itinerary);
+    const [itinerary] = await db
+      .insert(travelItineraries)
+      .values(insertItinerary)
+      .returning();
     return itinerary;
   }
 
   async getItinerary(id: number): Promise<TravelItinerary | undefined> {
-    return this.itineraries.get(id);
+    const [itinerary] = await db.select().from(travelItineraries).where(eq(travelItineraries.id, id));
+    return itinerary || undefined;
   }
 
   async getAllItineraries(): Promise<TravelItinerary[]> {
-    return Array.from(this.itineraries.values());
+    return await db.select().from(travelItineraries);
   }
 
   async createSegment(insertSegment: InsertTravelSegment): Promise<TravelSegment> {
-    const id = this.currentSegmentId++;
-    const segment: TravelSegment = {
-      ...insertSegment,
-      id,
-      distance: insertSegment.distance ?? 0,
-      emissions: insertSegment.emissions ?? 0,
-    };
-    this.segments.set(id, segment);
+    const [segment] = await db
+      .insert(travelSegments)
+      .values(insertSegment)
+      .returning();
     return segment;
   }
 
   async getSegmentsByItineraryId(itineraryId: number): Promise<TravelSegment[]> {
-    return Array.from(this.segments.values())
-      .filter(segment => segment.itineraryId === itineraryId)
-      .sort((a, b) => a.segmentOrder - b.segmentOrder);
+    return await db
+      .select()
+      .from(travelSegments)
+      .where(eq(travelSegments.itineraryId, itineraryId))
+      .orderBy(travelSegments.segmentOrder);
   }
 
   async updateItineraryEmissions(id: number, totalEmissions: number): Promise<void> {
-    const itinerary = this.itineraries.get(id);
-    if (itinerary) {
-      itinerary.totalEmissions = totalEmissions;
-      this.itineraries.set(id, itinerary);
-    }
+    await db
+      .update(travelItineraries)
+      .set({ totalEmissions })
+      .where(eq(travelItineraries.id, id));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
