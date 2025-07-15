@@ -37,6 +37,8 @@ export class MemStorage implements IStorage {
     const itinerary: TravelItinerary = {
       ...insertItinerary,
       id,
+      multipleTransport: insertItinerary.multipleTransport ?? false,
+      totalEmissions: insertItinerary.totalEmissions ?? 0,
       createdAt: new Date(),
     };
     this.itineraries.set(id, itinerary);
@@ -56,6 +58,8 @@ export class MemStorage implements IStorage {
     const segment: TravelSegment = {
       ...insertSegment,
       id,
+      distance: insertSegment.distance ?? 0,
+      emissions: insertSegment.emissions ?? 0,
     };
     this.segments.set(id, segment);
     return segment;
